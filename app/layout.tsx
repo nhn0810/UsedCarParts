@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google"; // Using Google Fonts
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "CarrotParts - Used Auto Parts Market",
+  title: "OnionParts - Used Auto Parts Market",
   description: "Simple, reliable used car parts marketplace.",
 };
 
@@ -20,6 +21,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <Navbar />
         {children}
+        <Footer />
       </body>
     </html>
   );
