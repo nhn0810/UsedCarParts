@@ -6,7 +6,7 @@ export default async function Navbar() {
 
     // 1. Get User Session
     const { data: { session } } = await supabase.auth.getSession()
-    let user = session?.user || null
+    let user: any = session?.user || null
 
     // 2. If user exists, check Admin status
     if (user) {
@@ -17,6 +17,7 @@ export default async function Navbar() {
             .single()
 
         if (profile) {
+            // Explicitly include existing properties to stay safe, though 'any' handles it
             user = { ...user, is_admin: profile.is_admin }
         }
     }
