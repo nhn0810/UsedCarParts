@@ -72,17 +72,23 @@ export default function NavbarClient({ initialUser, brands, categories }: Navbar
     }
 
     const handleSignIn = async () => {
+        // Explicitly capture origin to ensure consistency
+        const origin = window.location.origin
+
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
+                redirectTo: `${origin}/auth/callback`,
                 queryParams: {
                     access_type: 'offline',
                     prompt: 'consent',
                 },
             },
         })
-        if (error) console.error('Error logging in:', error.message)
+        if (error) {
+            alert(`로그인 오류: ${error.message}`)
+            console.error('Error logging in:', error.message)
+        }
     }
 
     const handleSignOut = async () => {
