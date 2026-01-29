@@ -1,10 +1,16 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import React from 'react'
 import { cn } from '@/lib/utils'
 
+export interface FilterItem {
+    id: number | string
+    name: string
+}
+
 interface SearchFiltersProps {
+    brands: FilterItem[]
+    categories: FilterItem[]
     selectedBrand: string
     selectedCategory: string
     onBrandChange: (brandId: string) => void
@@ -12,27 +18,13 @@ interface SearchFiltersProps {
 }
 
 export default function SearchFilters({
+    brands = [],
+    categories = [],
     selectedBrand,
     selectedCategory,
     onBrandChange,
     onCategoryChange
 }: SearchFiltersProps) {
-    const supabase = createClient()
-
-    const [brands, setBrands] = useState<any[]>([])
-    const [categories, setCategories] = useState<any[]>([])
-
-    useEffect(() => {
-        const fetchData = async () => {
-            const { data: brandsData } = await supabase.from('brands').select('*').order('name')
-            const { data: categoriesData } = await supabase.from('categories').select('*').order('name')
-
-            if (brandsData) setBrands(brandsData)
-            if (categoriesData) setCategories(categoriesData)
-        }
-        fetchData()
-    }, [])
-
     return (
         <div className="space-y-4">
             {/* Brands Filter */}

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { ArrowLeft, MessageCircle, Heart, Share2, X, ChevronLeft, ChevronRight, User as UserIcon } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -129,6 +130,10 @@ function ImageGallery({ images, title }: { images: string[], title: string }) {
 }
 
 export default function ClientProductDetailContent({ product, relatedProducts }: { product: any, relatedProducts: any[] }) {
+    const router = useRouter()
+    const [loading, setLoading] = useState(false)
+    const supabase = createClient()
+
     // Format helpers
     const formatPrice = (price: number) =>
         new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(price || 0)
@@ -138,6 +143,38 @@ export default function ClientProductDetailContent({ product, relatedProducts }:
     })
 
     const formattedPrice = formatPrice(product.price)
+
+    const handleChat = async () => {
+        setLoading(true)
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) {
+                alert('로그인이 필요한 서비스입니다.')
+                router.push('/login') // Or open login modal
+                return
+            }
+
+            if (user.id === product.user_id) {
+                alert('본인의 상품에는 채팅을 걸 수 없습니다.')
+                return
+            }
+
+            const { data: roomId, error } = await supabase.rpc('create_new_chat', {
+                p_product_id: product.id,
+                p_seller_id: product.user_id,
+                p_initial_message: `[${product.title}] 상품에 대한 구매 문의사항이 있어요!`
+            })
+
+            if (error) throw error
+
+            router.push(`/chat/${roomId}`)
+        } catch (error: any) {
+            console.error('Chat Error:', error)
+            alert('채팅방 생성에 실패했습니다.')
+        } finally {
+            setLoading(false)
+        }
+    }
 
     return (
         <main className="min-h-screen bg-[#FDF9F9] pb-20">
@@ -217,9 +254,14 @@ export default function ClientProductDetailContent({ product, relatedProducts }:
                             </div>
 
                             <div className="space-y-3">
-                                <Button size="lg" className="w-full bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-200 text-base font-semibold h-12">
+                                <Button
+                                    size="lg"
+                                    onClick={handleChat}
+                                    disabled={loading}
+                                    className="w-full bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-200 text-base font-semibold h-12"
+                                >
                                     <MessageCircle className="mr-2 h-5 w-5" />
-                                    판매자와 채팅하기
+                                    {loading ? '연결 중...' : '판매자와 채팅하기'}
                                 </Button>
                                 <div className="flex gap-2">
                                     <Button size="lg" variant="outline" className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50 h-12">
@@ -244,7 +286,10 @@ export default function ClientProductDetailContent({ product, relatedProducts }:
                         <span className="text-xs text-gray-500 block">총 금액</span>
                         <span className="text-xl font-bold text-purple-600">{formattedPrice}</span>
                     </div>
-                    <Button className="bg-purple-600 text-white shadow-sm flex-1">채팅하기</Button>
+                    <Button onClick={handleChat} disabled={loading} className="bg-purple-600 text-white shadow-sm flex-1">
+                        {loading ? '연결 중...' : '채팅하기'}
+                    </Button>
+                    <Button size="icon" variant="outline"><Heart className="h-5 w-5" /></Button>
                 </div>
             </div>
 

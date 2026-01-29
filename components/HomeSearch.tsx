@@ -5,9 +5,14 @@ import { useRouter } from 'next/navigation'
 import { Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import SearchFilters from '@/components/SearchFilters'
+import SearchFilters, { FilterItem } from '@/components/SearchFilters'
 
-export default function HomeSearch() {
+interface HomeSearchProps {
+    brands: FilterItem[]
+    categories: FilterItem[]
+}
+
+export default function HomeSearch({ brands, categories }: HomeSearchProps) {
     const router = useRouter()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
@@ -77,6 +82,8 @@ export default function HomeSearch() {
                         onMouseDown={(e) => e.stopPropagation()}
                     >
                         <SearchFilters
+                            brands={brands}
+                            categories={categories}
                             selectedBrand={selectedBrand}
                             selectedCategory={selectedCategory}
                             onBrandChange={setSelectedBrand}

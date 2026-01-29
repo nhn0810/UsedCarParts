@@ -4,12 +4,11 @@ import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import HomeSearch from '@/components/HomeSearch'
-// import SearchFilters from '@/components/SearchFilters' // Replaced by HomeSearch for the hero area
 
-export const dynamic = 'force-dynamic' // Ensure page is not statically cached with old data
+export const dynamic = 'force-dynamic'
 
 export default async function Home(props: {
-  searchParams: Promise<{ q?: string; brand?: string; category?: string; view?: string }> // Added 'view' to searchParams type
+  searchParams: Promise<{ q?: string; brand?: string; category?: string; view?: string }>
 }) {
   const searchParams = await props.searchParams
   const supabase = await createClient()
@@ -17,15 +16,31 @@ export default async function Home(props: {
   // Check if any search is active (keyword, brand, category, or explicit view mode)
   const isSearchActive = searchParams.q || searchParams.brand || searchParams.category || searchParams.view === 'all'
 
-  // Build Query
+  // Fetch Filters Logic (Brands/Categories) - Server Side
+  const [brandsResult, categoriesResult] = await Promise.all([
+    supabase.from('brands').select('id, name').order('name'),
+    supabase.from('categories').select('id, name').order('name')
+  ])
+
+  const brands = brandsResult.data || []
+  const categories = categoriesResult.data || []
+
+  // Fallback data if DB is empty (Development convenience)
+  const finalBrands = brands.length > 0 ? brands : [
+    { id: '1', name: 'Hyundai' }, { id: '2', name: 'Kia' }, { id: '3', name: 'BMW' }
+  ]
+  const finalCategories = categories.length > 0 ? categories : [
+    { id: '1', name: 'Engine' }, { id: '2', name: 'Transmission' }, { id: '3', name: 'Suspension' }
+  ]
+
+  // Build Query for Products
   let query = supabase
     .from('products')
     .select('*, brands(name), categories(name)')
-    .order('created_at', { ascending: false }) // Moved order here
+    .order('created_at', { ascending: false })
 
-  // Only apply filters if search is active and not just 'view=all' (unless we want to support filtering on view=all, which we do)
+  // Only apply filters if search is active
   if (searchParams.q) {
-    // Note: This requires full text search config or simple ilike
     query = query.ilike('title', `%${searchParams.q}%`)
   }
   if (searchParams.brand) {
@@ -34,10 +49,6 @@ export default async function Home(props: {
   if (searchParams.category) {
     query = query.eq('category_id', searchParams.category)
   }
-
-  // If not in search mode, we don't strictly need to fetch products, but for "latest preview" we might (which we are removing). 
-  // But wait, user said "Remove the latest items section below".
-  // So we only fetch if isSearchActive.
 
   let products = null
   if (isSearchActive) {
@@ -63,7 +74,7 @@ export default async function Home(props: {
           </p>
 
           {/* Central Search Component */}
-          <HomeSearch />
+          <HomeSearch brands={finalBrands} categories={finalCategories} />
 
           {/* Quick Categories */}
           <div className="space-y-4 mb-20">
